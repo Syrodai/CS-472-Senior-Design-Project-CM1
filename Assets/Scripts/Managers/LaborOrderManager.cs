@@ -14,7 +14,7 @@ public class LaborOrderManager : MonoBehaviour
     [SerializeField]
     public static Queue<Pawn> availablePawns;
     private static Queue<Pawn> assignedPawns;
-    private static Queue<LaborOrder_Base>[] laborQueues;
+    public static Queue<LaborOrder_Base>[] laborQueues;
     private static int laborOrderTotal = 0;
 
     private const int NUM_OF_PAWNS_TO_SPAWN = 1000;
@@ -76,6 +76,15 @@ public class LaborOrderManager : MonoBehaviour
         return total;
     }
 
+    // AddPlantcutLaborOrder
+    public static void AddPlantcutLaborOrder(Item itemToPlantcut)
+    {
+        // Create a new plantcut labor order
+        LaborOrder_Plantcut plantcutOrder = new LaborOrder_Plantcut(itemToPlantcut);
+        // Add the labor order to the queue
+        laborQueues[(int)LaborType.Plantcut].Enqueue(plantcutOrder);
+    }
+
     // Method to add a place labor order to the queue
     public static void AddPlaceLaborOrder(Item itemToPlace)
     {
@@ -117,13 +126,6 @@ public class LaborOrderManager : MonoBehaviour
         // iterate through all objects and find the first tile with an item that is deconstructable
         Item[] objects = FindObjectsOfType<Item>();
 
-        // Check if the objects array is null
-        if (objects == null)
-        {
-            Debug.LogWarning("No GameObjects found in the scene.");
-            return;
-        }
-
         foreach (Item obj in objects)
         {
             Item itemComponent = obj.GetComponent<Item>();
@@ -136,6 +138,24 @@ public class LaborOrderManager : MonoBehaviour
                 return;
             }
         }
+    }
+
+    // AddSpecificMineLaborOrder
+    public static void AddSpecificMineLaborOrder(Item obj)
+    {
+        // create a new mine labor order
+        LaborOrder_Mine mineOrder = new LaborOrder_Mine(obj);
+        // add the labor order to the queue
+        laborQueues[(int)LaborType.Mine].Enqueue(mineOrder);
+    }
+
+    // AddSpecificGatherLaborOrder
+    public static void AddSpecificGatherLaborOrder(Item obj)
+    {
+        // create a new gather labor order
+        LaborOrder_Gather gatherOrder = new LaborOrder_Gather(obj);
+        // add the labor order to the queue
+        laborQueues[(int)LaborType.Gather].Enqueue(gatherOrder);
     }
 
     public static void AddSpecificDeconstructLaborOrder(Item obj)
@@ -331,6 +351,18 @@ public class LaborOrderManager : MonoBehaviour
         }
     }
 
+    public static void CreateNewPawn()
+    {
+        GameObject pawn_prefab = Resources.Load<GameObject>("prefabs/npc/Pawn");
+
+        // Instantiate the pawn and store the reference in a variable
+        GameObject pawn_instance = UnityEngine.Object.Instantiate(pawn_prefab, GridManager.tileMap.GetCellCenterWorld(Vector3Int.FloorToInt(new Vector3(GridManager.LEVEL_WIDTH / 2, GridManager.LEVEL_HEIGHT / 2, 0))), Quaternion.identity);
+
+        // Set the parent of the instantiated pawn, not the prefab itself
+        pawn_instance.transform.SetParent(GameObject.Find("Pawns").transform);
+        AddAvailablePawn(pawn_instance.GetComponent<Pawn>());
+    }
+
 
     // Method to fill the labor order queues with random labor tasks
     public static void FillWithRandomLaborOrders(int count)
@@ -365,13 +397,6 @@ public class LaborOrderManager : MonoBehaviour
     public static void PopulateObjectLaborOrders()
     {
         Item[] objects = FindObjectsOfType<Item>();
-
-        // Check if the objects array is null
-        if (objects == null)
-        {
-            Debug.LogWarning("No GameObjects found in the scene.");
-            return;
-        }
 
         foreach (Item obj in objects)
         {
@@ -464,13 +489,6 @@ public class LaborOrderManager : MonoBehaviour
     {
         Item[] objects = FindObjectsOfType<Item>();
 
-        // Check if the objects array is null
-        if (objects == null)
-        {
-            Debug.LogWarning("No GameObjects found in the scene.");
-            return;
-        }
-
         foreach (Item obj in objects)
         {
             Item item = obj.GetComponent<Item>();
@@ -558,13 +576,6 @@ public class LaborOrderManager : MonoBehaviour
     private static void PopulateObjectLaborOrdersOfType(Func<Item, bool> itemCondition, Func<Item, LaborOrder_Base> createLaborOrder)
     {
         Item[] objects = FindObjectsOfType<Item>();
-
-        // Check if the objects array is null
-        if (objects == null)
-        {
-            Debug.LogWarning("No GameObjects found in the scene.");
-            return;
-        }
 
         foreach (Item obj in objects)
         {

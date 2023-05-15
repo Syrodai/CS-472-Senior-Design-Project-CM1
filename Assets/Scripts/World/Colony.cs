@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class Colony : MonoBehaviour
 {
-    public List<Zone> zones = new List<Zone>();
+    public static List<Zone> zones = new List<Zone>();
     [SerializeField] private SpriteRenderer zoneSprite;
     [SerializeField] private string colonyName = "Test Colony";
 
@@ -27,14 +27,14 @@ public class Colony : MonoBehaviour
         return GlobalStorage.GetItemCount(itemName);
     }
 
-    /*public bool RemoveItemFromColony(Item item, int quantity)
+    public bool RemoveItemFromColony(string itemName, int quantity)
     {
-        if(GlobalStorage.GetItemCount(item.itemName) < quantity)
+        if(GlobalStorage.GetItemCount(itemName) < quantity)
         {
             return false;
         }
 
-        List<Chest> chestWithItem = GlobalStorage.GetChestWithItem(item);
+        List<Chest> chestWithItem = GlobalStorage.GetChestsWithItem(itemName);
         foreach(Chest chest in chestWithItem)
         {
             if(quantity <= 0)
@@ -42,32 +42,32 @@ public class Colony : MonoBehaviour
                 break;
             }
 
-            int itemsDeleted = chest.ItemCountInChest(item.itemName);
+            int itemsDeleted = chest.GetItemQuantity(itemName);
             if(itemsDeleted < quantity)
             {
-                chest.RemoveItemFromChest(item.itemName, itemsDeleted);
+                chest.RemoveNumberOfItems(itemName, itemsDeleted);
                 quantity -= itemsDeleted;
             }
             else
             {
-                chest.RemoveItemFromChest(item.itemName, quantity);
+                chest.RemoveAllItems(itemName);
                 quantity = 0;
             }
         }
 
         return true;
-    }*/
+    }
 
-    /*public void AddItemToColony(Item item)
+    public void AddItemToColony(string itemName, int itemQuantity)
     {
-        Chest lootLocation = GlobalStorage.GetClosestChest(new Vector3());
-        if(lootLocation == null)
+        if(itemName == "Pawn")
         {
-            return;
+            for(int i = 0; i < itemQuantity; i++)
+            {
+                LaborOrderManager.CreateNewPawn();
+            }
         }
-
-        lootLocation.AddItem(item);
-    }*/
+    }
 
     /////////////////////////////////////
     // Zone Methods 
@@ -100,6 +100,57 @@ public class Colony : MonoBehaviour
     public List<Zone> GetZones()
     {
         return zones;
+    }
+
+    public static void GenerateLaborOrdersFromGrowZones()
+    {
+        foreach(Zone zone in zones){
+            if((int)zone.GetZoneType() == 1)
+            {
+                for (int i = (int)zone.bottomLeft.x; i < (int)zone.topRight.x; i++)
+                {
+                    for (int j = (int)zone.bottomLeft.y; j < (int)zone.topRight.y; j++)
+                    {
+                        if (((BaseTile)(GridManager.tileMap.GetTile(new Vector3Int(i, j, 0)))).resource == null)
+                        {
+                            // add temp item to resource var
+                            ((BaseTile)(GridManager.tileMap.GetTile(new Vector3Int(i, j, 0)))).resource = Resources.Load<Item>("prefabs/items/TempItem");
+                            Item itemToPlace = Resources.Load<Item>("prefabs/items/Wheat");
+                            itemToPlace.isPlantcuttable = false;
+                            LaborOrderManager.AddPlaceLaborOrder(itemToPlace, new Vector2(i, j));
+                        }
+                        else
+                        {
+                            //Debug.Log("Resource already exists at " + i + ", " + j);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static void GenerateLaborOrdersFromPlantcuttableZones()
+    {
+        foreach (Zone zone in zones)
+        {
+            if ((int)zone.GetZoneType() == 1)
+            {
+                for (int i = (int)zone.bottomLeft.x; i < (int)zone.topRight.x; i++)
+                {
+                    for (int j = (int)zone.bottomLeft.y; j < (int)zone.topRight.y; j++)
+                    {
+                        if (((BaseTile)(GridManager.tileMap.GetTile(new Vector3Int(i, j, 0)))).resource.isPlantcuttable == true)
+                        {
+                            LaborOrderManager.AddPlantcutLaborOrder(((BaseTile)(GridManager.tileMap.GetTile(new Vector3Int(i, j, 0)))).resource);
+                        }
+                        else
+                        {
+                            //Debug.Log("Resource already exists at " + i + ", " + j);
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

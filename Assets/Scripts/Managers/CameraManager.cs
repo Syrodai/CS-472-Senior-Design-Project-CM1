@@ -16,11 +16,17 @@ public class CameraManager
 
     public static void InitializeCamera()
     {
+        if (mainCamera == null)
+        {
+            Debug.Log("mainCamera is null");
+            return;
+        }
+
         float levelXMax = GridManager.mapLevels[0].getXMax();
         float levelYMax = GridManager.mapLevels[0].getYMax();
         float cameraX = levelXMax / 2;
         float cameraY = levelYMax / 2;
-        if(mainCamera == null)
+        if (mainCamera == null)
         {
             return;
         }
@@ -70,7 +76,7 @@ public class CameraManager
         return Vector3.MoveTowards(currentPosition, target, movementSpeed);
     }
 
-    private static void MoveCamera(CameraMovement input)
+    public static void MoveCamera(CameraMovement input)
     {
         currentLevel = getCurrentLevel();
         float height = mainCamera.orthographicSize;
@@ -159,10 +165,9 @@ public class CameraManager
         }
     }
 
-    private static void UpdateCameraOrthographicSize()
+    public static void UpdateCameraOrthographicSize(float delta)
     {
         currentLevel = getCurrentLevel();
-        float delta = Input.mouseScrollDelta.y;
         float newHeight = mainCamera.orthographicSize + (delta * ZOOM_SPEED); // NEW
         float newWidth = newHeight * mainCamera.aspect;
 
@@ -236,7 +241,7 @@ public class CameraManager
 
         if (Input.mouseScrollDelta.y != 0) // Camera Zoom
         {
-            UpdateCameraOrthographicSize();
+            UpdateCameraOrthographicSize(Input.mouseScrollDelta.y);
         }
     }
 }
